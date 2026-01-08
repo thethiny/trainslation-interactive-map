@@ -1,0 +1,5 @@
+{
+  "name": "MetroPath Optimizer",
+  "description": "An interactive metro network visualization and pathfinding tool allowing users to optimize for shortest hops, path distance, or complete node traversal with animated fluid-style routes.",
+  "requestFramePermissions": []
+}

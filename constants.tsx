@@ -9,50 +9,52 @@ export const LINE_COLORS: Record<LineID, string> = {
 };
 
 const stations: Station[] = [
-  // Intersections (Hubs)
-  { id: 'GB1', name: 'ОБЕЛИЯ / OBELIA', line: ['green', 'blue'], x: 3, y: 3, isTransfer: true },
-  { id: 'GB2', name: 'СЕРДИКА / SERDIKA', line: ['green', 'blue'], x: 7, y: 3, isTransfer: true },
-  { id: 'GR1', name: 'СЛИВНИЦА / SLIVNITSA', line: ['green', 'red'], x: 7, y: 7, isTransfer: true },
-  { id: 'GR2', name: 'МЛАДОСТ / MLADOST', line: ['green', 'red'], x: 3, y: 7, isTransfer: true },
   
-  { id: 'BY1', name: 'ВАРДАР / VARDAR', line: ['blue', 'yellow'], x: 9, y: 5, isTransfer: true },
-  { id: 'BY2', name: 'КОНСТАНТИН / K.', line: ['blue', 'yellow'], x: 5, y: 1, isTransfer: true },
-  { id: 'RY1', name: 'ОПЪЛЧЕНСКА / OP.', line: ['red', 'yellow'], x: 1, y: 5, isTransfer: true },
-  { id: 'RY2', name: 'ТЕАТЪР / TEATAR', line: ['red', 'yellow'], x: 5, y: 9, isTransfer: true },
+  { id: 'G1', name: 'G1', line: ['green'], x: 40, y: 120, isTransfer: false },
+  { id: 'G2', name: 'G2', line: ['green'], x: 330, y: 10, isTransfer: false },
+  { id: 'G3', name: 'G3', line: ['green'], x: 570, y: 40, isTransfer: false },
+  { id: 'GB1', name: 'GB1', line: ['green', 'blue'], x: 660, y: 210, isTransfer: true },
+  { id: 'G4', name: 'G4', line: ['green'], x: 710, y: 280, isTransfer: false },
+  { id: 'GR1', name: 'GR1', line: ['green', 'red'], x: 610, y: 410, isTransfer: true },
+  { id: 'G5', name: 'G5', line: ['green'], x: 450, y: 390, isTransfer: false },
+  { id: 'G6', name: 'G6', line: ['green'], x: 320, y: 300, isTransfer: false },
+  { id: 'GR2', name: 'GR2', line: ['green', 'red'], x: 240, y: 300, isTransfer: true },
+  { id: 'GB2', name: 'GB2', line: ['green', 'blue'], x: 80, y: 250, isTransfer: true },
 
-  // Green normal
-  { id: 'G1', name: 'КЛ. ОХРИДСКИ', line: ['green'], x: 4, y: 3, isTransfer: false },
-  { id: 'G2', name: 'ВАСИЛ ЛЕВСКИ', line: ['green'], x: 5, y: 3, isTransfer: false },
-  { id: 'G3', name: 'ЖОЛИО КЮРИ', line: ['green'], x: 6, y: 3, isTransfer: false },
-  { id: 'G4', name: 'Г.М. ДИМИТРОВ', line: ['green'], x: 7, y: 5, isTransfer: false },
-  { id: 'G5', name: 'МУСАГЕНИЦА', line: ['green'], x: 5, y: 7, isTransfer: false },
-  { id: 'G6', name: 'ДЖОГИНГ / JOG.', line: ['green'], x: 3, y: 5, isTransfer: false },
+  { id: 'B1', name: 'B1', line: ['blue'], x: 210, y: 110, isTransfer: false },
+  { id: 'B2', name: 'B2', line: ['blue'], x: 450, y: 80, isTransfer: false },
+  { id: 'B3', name: 'B3', line: ['blue'], x: 750, y: 120, isTransfer: false },
+  // GB1 here
+  { id: 'B4', name: 'B4', line: ['blue'], x: 570, y: 210, isTransfer: false },
+  { id: 'BY1', name: 'BY1', line: ['blue', 'yellow'], x: 480, y: 290, isTransfer: true },
+  { id: 'B5', name: 'B5', line: ['blue'], x: 450, y: 320, isTransfer: false },
+  { id: 'B6', name: 'B6', line: ['blue'], x: 300, y: 410, isTransfer: false },
+  { id: 'BY2', name: 'BY2', line: ['blue', 'yellow'], x: 130, y: 370, isTransfer: true },
+  { id: 'B7', name: 'B7', line: ['blue'], x: 90, y: 320, isTransfer: false },
+  // GB2 Here
 
-  // Blue normal
-  { id: 'B1', name: 'М. ЛУИЗА', line: ['blue'], x: 3, y: 2, isTransfer: false },
-  { id: 'B2', name: 'ЦЕНТРАЛНА ГАРА', line: ['blue'], x: 4, y: 1, isTransfer: false },
-  { id: 'B3', name: 'ЛЪВОВ МОСТ', line: ['blue'], x: 6, y: 1, isTransfer: false },
-  { id: 'B4', name: 'НДК / NDK', line: ['blue'], x: 7, y: 2, isTransfer: false },
-  { id: 'B5', name: 'ЕВРОПЕЙСКИ', line: ['blue'], x: 8, y: 3, isTransfer: false },
-  { id: 'B6', name: 'ВИТОША / VIT.', line: ['blue'], x: 9, y: 4, isTransfer: false },
-  { id: 'B7', name: 'ШЛИФЕР / SHL.', line: ['blue'], x: 5, y: 2, isTransfer: false },
+  { id: 'R1', name: 'R1', line: ['red'], x: 390, y: 130, isTransfer: false },
+  { id: 'R2', name: 'R2', line: ['red'], x: 590, y: 130, isTransfer: false },
+  { id: 'R3', name: 'R3', line: ['red'], x: 810, y: 270, isTransfer: false },
+  // GR1 Here
+  { id: 'R4', name: 'R4', line: ['red'], x: 590, y: 550, isTransfer: false },
+  { id: 'R5', name: 'R5', line: ['red'], x: 370, y: 560, isTransfer: false },
+  { id: 'RY1', name: 'RY1', line: ['red', 'yellow'], x: 280, y: 520, isTransfer: true },
+  { id: 'R6', name: 'R6', line: ['red'], x: 240, y: 370, isTransfer: false },
+  // GR2 Here
+  { id: 'RY2', name: 'RY2', line: ['red', 'yellow'], x: 270, y: 200, isTransfer: true },
 
-  // Red normal
-  { id: 'R1', name: 'ИЕЦ / IEC', line: ['red'], x: 8, y: 7, isTransfer: false },
-  { id: 'R2', name: 'ЦАРИГРАДСКО', line: ['red'], x: 7, y: 8, isTransfer: false },
-  { id: 'R3', name: 'ДРУЖБА / DR.', line: ['red'], x: 5, y: 8, isTransfer: false },
-  { id: 'R4', name: 'ИСКЪРСКО', line: ['red'], x: 3, y: 8, isTransfer: false },
-  { id: 'R5', name: 'СОФИЙСКА СВ.', line: ['red'], x: 2, y: 7, isTransfer: false },
-  { id: 'R6', name: 'ЛЕТИЩЕ / AIR.', line: ['red'], x: 2, y: 6, isTransfer: false },
-
-  // Yellow normal
-  { id: 'Y1', name: 'ХАДЖИ Д.', line: ['yellow'], x: 1, y: 4, isTransfer: false },
-  { id: 'Y2', name: 'ГЕРЕНА / GER.', line: ['yellow'], x: 1, y: 6, isTransfer: false },
-  { id: 'Y3', name: 'КР. СЕЛО', line: ['yellow'], x: 2, y: 9, isTransfer: false },
-  { id: 'Y4', name: 'БЪЛГАРИЯ', line: ['yellow'], x: 4, y: 9, isTransfer: false },
-  { id: 'Y5', name: 'МЕД. УНИВ.', line: ['yellow'], x: 6, y: 9, isTransfer: false },
-  { id: 'Y6', name: 'СВ. ПАТРИАРХ', line: ['yellow'], x: 8, y: 9, isTransfer: false },
-  { id: 'Y7', name: 'НАВОДНЕНИЯ', line: ['yellow'], x: 9, y: 6, isTransfer: false },
+  // BY2 Here
+  { id: 'Y1', name: 'Y1', line: ['yellow'], x: 190, y: 220, isTransfer: false },
+  // RY2 Here
+  { id: 'Y2', name: 'Y2', line: ['yellow'], x: 390, y: 200, isTransfer: false },
+  // BY1 Here
+  { id: 'Y3', name: 'Y3', line: ['yellow'], x: 530, y: 330, isTransfer: false },
+  { id: 'Y4', name: 'Y4', line: ['yellow'], x: 530, y: 490, isTransfer: false },
+  { id: 'Y5', name: 'Y5', line: ['yellow'], x: 390, y: 510, isTransfer: false },
+  // RY1 Here
+  { id: 'Y6', name: 'Y6', line: ['yellow'], x: 140, y: 510, isTransfer: false },
+  { id: 'Y7', name: 'Y7', line: ['yellow'], x: 30, y: 490, isTransfer: false },
 ];
 
 export const STATIONS = stations;
@@ -73,9 +75,9 @@ const buildPath = (ids: string[], line: LineID) => {
   }
 };
 
-buildPath(['GB1', 'G1', 'G2', 'G3', 'GB2', 'G4', 'GR1', 'G5', 'GR2', 'G6'], 'green');
-buildPath(['GB1', 'B1', 'B2', 'BY2', 'B3', 'B4', 'GB2', 'B5', 'B6', 'BY1', 'B7'], 'blue');
-buildPath(['GR1', 'R1', 'R2', 'RY2', 'R3', 'R4', 'GR2', 'R5', 'R6', 'RY1'], 'red');
-buildPath(['RY1', 'Y1', 'Y2', 'RY2', 'Y3', 'Y4', 'Y5', 'Y6', 'BY1', 'Y7', 'BY2'], 'yellow');
+buildPath(['G1', 'G2', 'G3', 'GB1', 'G4', 'GR1', 'G5', 'G6', 'GR2', 'GR2', 'GB2'], 'green');
+buildPath(['B1', 'B2', 'B3', 'GB1', 'B4', 'BY1', 'B5', 'B6', 'BY2', 'B7', 'GB2'], 'blue');
+buildPath(['R1', 'R2', 'R3', 'GR1', 'R4', 'R5', 'RY1', 'R6', 'GR2', 'RY2'], 'red');
+buildPath(['BY2', 'Y1', 'RY2', 'Y2', 'BY1', 'Y3', 'Y4', 'Y5', 'RY1', 'Y6', 'Y7'], 'yellow');
 
 export const CONNECTIONS = connections;

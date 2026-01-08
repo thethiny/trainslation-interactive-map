@@ -59,10 +59,22 @@ export const MetroMap: React.FC<MetroMapProps> = ({
   }, [activeHoverId]);
 
   const PADDING = 10;
+  const SCALE = 1/8;
   const getCoords = (x: number, y: number) => ({
-    x: PADDING + (x * 8),
-    y: PADDING + (y * 8)
+    x: PADDING + (x * SCALE),
+    y: PADDING + (y * SCALE)
   });
+
+  // Calculate dynamic viewBox based on scaled station coordinates
+  const maxCoords = useMemo(() => {
+    let maxX = 0, maxY = 0;
+    STATIONS.forEach(s => {
+      const { x, y } = getCoords(s.x, s.y);
+      if (x > maxX) maxX = x;
+      if (y > maxY) maxY = y;
+    });
+    return { maxX: maxX + PADDING, maxY: maxY + PADDING };
+  }, [STATIONS]);
 
   const pathVisits = useMemo(() => {
     const map = new Map<string, VisitDetail[]>();
@@ -168,7 +180,10 @@ export const MetroMap: React.FC<MetroMapProps> = ({
       className={`relative w-full h-full flex items-center justify-center overflow-visible industrial-panel rounded-none border-4 border-[#30363d] ${isPreview ? 'cursor-default' : 'cursor-crosshair'}`}
     >
       <div className="absolute inset-0 paper-texture overflow-hidden">
-        <svg viewBox="0 0 100 100" className="w-full h-full max-w-[850px] max-h-[850px] mx-auto overflow-visible">
+        <svg
+          viewBox={`0 0 ${maxCoords.maxX} ${maxCoords.maxY}`}
+          className="w-full h-full max-w-[850px] max-h-[850px] mx-auto overflow-visible"
+        >
           <defs>
             <pattern id="chalkGrid" width="8" height="8" patternUnits="userSpaceOnUse">
               <path d="M 8 0 L 0 0 0 8" fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth="0.1" />

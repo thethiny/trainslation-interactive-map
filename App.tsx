@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { MetroMap } from './components/MetroMap';
@@ -19,24 +20,12 @@ const App: React.FC = () => {
   const [showPlanOverlay, setShowPlanOverlay] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  /**
-   * Invariant:
-   * 1. The list must have at least 2 entries (A and B).
-   * 2. The last entry must always be an empty string (the "+" slot) 
-   *    UNLESS only the first two slots exist and are both empty.
-   */
   const cleanWaypoints = (ws: string[]) => {
-    // 1. Get all filled values in order
     const filled = ws.filter(w => w !== "");
-    
-    // 2. We always want a trailing empty slot to act as the "Add" button
     const next = [...filled, ""];
-    
-    // 3. Ensure we have at least A and B slots
     while (next.length < 2) {
       next.push("");
     }
-    
     return next;
   };
 
@@ -55,10 +44,8 @@ const App: React.FC = () => {
     let next: string[];
 
     if (existingIdx !== -1) {
-      // Toggle off: Remove if it's there
       next = waypoints.filter(w => w !== id);
     } else {
-      // Find the first empty slot to fill
       const firstEmpty = waypoints.indexOf("");
       if (firstEmpty !== -1) {
         next = [...waypoints];
@@ -82,9 +69,6 @@ const App: React.FC = () => {
   };
 
   const handleRemoveWaypoint = (idx: number) => {
-    // Indices 0 and 1 (A and B) cannot be removed from the list structure, 
-    // though their values can be cleared by the StationSelect.
-    // However, the Sidebar logic hides the "X" for index 0 and 1.
     const nextWaypoints = waypoints.filter((_, i) => i !== idx);
     setWaypoints(cleanWaypoints(nextWaypoints));
   };
@@ -94,7 +78,8 @@ const App: React.FC = () => {
       <Header />
       
       <main className="flex-1 flex flex-col lg:flex-row p-4 lg:p-6 gap-6 overflow-hidden">
-        <div className="flex-1 relative overflow-hidden flex flex-col">
+        {/* Changed overflow-hidden to overflow-visible here to fix tooltip truncation */}
+        <div className="flex-1 relative overflow-visible flex flex-col">
           <MetroMap 
             waypoints={waypoints}
             onSelectStation={handleStationClick}
@@ -102,7 +87,9 @@ const App: React.FC = () => {
             hoverSegmentIdx={hoverSegmentIdx}
             pathResult={pathResult}
             showLabels={showLabels}
+            onToggleLabels={() => setShowLabels(!showLabels)}
             showHubLabels={showHubLabels}
+            onToggleHubLabels={() => setShowHubLabels(!showHubLabels)}
             title="Transit Authority"
             subtitle="Real-time Network Logic"
           />
@@ -134,10 +121,6 @@ const App: React.FC = () => {
           mode={mode} 
           onModeChange={setMode}
           pathResult={pathResult}
-          showLabels={showLabels} 
-          onToggleLabels={() => setShowLabels(!showLabels)}
-          showHubLabels={showHubLabels} 
-          onToggleHubLabels={() => setShowHubLabels(!showHubLabels)}
           onOpenModal={() => setIsModalOpen(true)}
         />
       </main>

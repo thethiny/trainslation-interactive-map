@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { StationSelect } from './StationSelect';
 import { OptimizationMode, PathResult, PathSegment } from '../types';
@@ -12,10 +13,6 @@ interface SidebarProps {
   mode: OptimizationMode;
   onModeChange: (mode: OptimizationMode) => void;
   pathResult: PathResult | null;
-  showLabels: boolean;
-  onToggleLabels: () => void;
-  showHubLabels: boolean;
-  onToggleHubLabels: () => void;
   onOpenModal: () => void;
 }
 
@@ -30,10 +27,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   mode,
   onModeChange,
   pathResult,
-  showLabels,
-  onToggleLabels,
-  showHubLabels,
-  onToggleHubLabels,
   onOpenModal
 }) => {
   const legGroups = useMemo(() => {
@@ -72,13 +65,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex items-center justify-between ml-1">
           <label className="text-xs font-black uppercase tracking-widest text-slate-500">Waypoints</label>
         </div>
-        {/* We use pb-32 to ensure the dropdown for the last item has space to render without immediate clipping */}
-        <div className="space-y-3 pb-32">
+        <div className="space-y-3 pb-8">
           {waypoints.map((wid, i) => {
             const isLast = i === waypoints.length - 1;
             const isA = i === 0;
             const isB = i === 1;
-            // The plus sign only shows for the very last slot IF it is not one of the base A/B anchors
             const showPlus = isLast && !wid && !isA && !isB;
             
             return (
@@ -115,7 +106,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </section>
 
       {/* Strategies Section */}
-      <section className="space-y-4 -mt-24">
+      <section className="space-y-4">
         <div className="space-y-4">
           <div>
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block">Shortest Path</label>
@@ -148,28 +139,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </section>
 
-      {/* Configuration Section */}
-      <section className="p-5 bg-slate-900/40 rounded-2xl border border-white/5 space-y-3">
-        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 block">Display Settings</label>
-        <div className="flex flex-col gap-2">
-          <button onClick={onToggleLabels} className={`flex items-center justify-between px-4 py-2.5 rounded-xl border transition-all ${showLabels ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400' : 'bg-slate-800/50 border-slate-700 text-slate-400'}`}>
-            <span className="text-xs font-bold uppercase tracking-wider">Node Labels</span>
-            <div className={`w-8 h-4 rounded-full relative transition-colors ${showLabels ? 'bg-indigo-500' : 'bg-slate-700'}`}>
-              <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${showLabels ? 'left-4.5' : 'left-0.5'}`} />
-            </div>
-          </button>
-          <button onClick={onToggleHubLabels} className={`flex items-center justify-between px-4 py-2.5 rounded-xl border transition-all ${showHubLabels ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-400' : 'bg-slate-800/50 border-slate-700 text-slate-400'}`}>
-            <span className="text-xs font-bold uppercase tracking-wider">Hub Labels</span>
-            <div className={`w-8 h-4 rounded-full relative transition-colors ${showHubLabels ? 'bg-indigo-500' : 'bg-slate-700'}`}>
-              <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${showHubLabels ? 'left-4.5' : 'left-0.5'}`} />
-            </div>
-          </button>
-        </div>
-      </section>
-
       {/* Itinerary Preview */}
       {pathResult && (
-        <section className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <section className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500 mt-auto">
           <div className="flex items-center justify-between px-2">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500">Itinerary</h3>
             <button 
@@ -180,7 +152,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
             </button>
           </div>
-          <div className="space-y-1 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar border-t border-slate-800 pt-3">
+          <div className="space-y-1 max-h-[160px] overflow-y-auto pr-2 custom-scrollbar border-t border-slate-800 pt-3">
             {legGroups.slice(0, 3).map((group, gIdx) => (
               <div key={`leg-mini-${gIdx}`} className="space-y-1">
                 <div className="text-[8px] font-black text-indigo-400/70 uppercase px-2">{group.label}</div>

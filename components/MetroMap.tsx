@@ -10,7 +10,9 @@ interface MetroMapProps {
   hoverSegmentIdx: number | null;
   pathResult: PathResult | null;
   showLabels: boolean;
+  onToggleLabels: () => void;
   showHubLabels: boolean;
+  onToggleHubLabels: () => void;
   title: string;
   subtitle: string;
   isPreview?: boolean;
@@ -36,14 +38,16 @@ export const MetroMap: React.FC<MetroMapProps> = ({
   hoverSegmentIdx,
   pathResult,
   showLabels,
+  onToggleLabels,
   showHubLabels,
+  onToggleHubLabels,
   title,
   subtitle,
   isPreview = false,
   filteredLegIndex = null
 }) => {
   const [internalHoverId, setInternalHoverId] = useState<string | null>(null);
-  const [tooltip, setTooltip] = useState<{ x: number, y: number, visits: VisitDetail[] } | null>(null);
+  const [tooltip, setTooltip] = useState<{ x: number, y: number, rawY: number, visits: VisitDetail[] } | null>(null);
   const [tooltipHoverStation, setTooltipHoverStation] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -53,10 +57,6 @@ export const MetroMap: React.FC<MetroMapProps> = ({
     if (!activeHoverId) return [];
     return CONNECTIONS.filter(c => c.from === activeHoverId || c.to === activeHoverId);
   }, [activeHoverId]);
-
-  const neighborStationIds = useMemo(() => {
-    return new Set(activeHoverConnections.flatMap(c => [c.from, c.to]));
-  }, [activeHoverConnections]);
 
   const PADDING = 10;
   const getCoords = (x: number, y: number) => ({
@@ -114,7 +114,6 @@ export const MetroMap: React.FC<MetroMapProps> = ({
 
     return Object.entries(linesByColor).map(([lineId, paths]) => {
       const isLineConnectedToHover = activeHoverConnections.some(c => c.line === lineId);
-      // Aggressively fade static lines if filtering a leg
       const baseOpacity = filteredLegIndex !== null ? "0.01" : (activeHoverId ? (isLineConnectedToHover ? "0.6" : "0.1") : "0.3");
       
       return (
@@ -147,7 +146,6 @@ export const MetroMap: React.FC<MetroMapProps> = ({
       const isHoveredSegment = hoverSegmentIdx === i;
       const isFilteredOut = filteredLegIndex !== null && seg.legIndex !== filteredLegIndex;
 
-      // If filtered out, don't just hide opacity, ensure it feels completely gone from layout
       if (isFilteredOut) return null;
 
       return (
@@ -187,106 +185,142 @@ export const MetroMap: React.FC<MetroMapProps> = ({
       const rect = containerRef.current.getBoundingClientRect();
       const xPercent = (coords.x / 100) * rect.width;
       const yPercent = (coords.y / 100) * rect.height;
-      setTooltip({ x: xPercent, y: yPercent, visits });
+      setTooltip({ x: xPercent, y: yPercent, rawY: coords.y, visits });
     }
   };
+
+  const isTooltipAbove = tooltip && tooltip.rawY > 35;
 
   return (
     <div 
       ref={containerRef}
-      className={`relative w-full h-full flex items-center justify-center bg-[#0a0f1d] rounded-3xl overflow-hidden border border-slate-800 shadow-inner group/map ${isPreview ? 'cursor-default' : 'cursor-crosshair'}`}
+      className={`relative w-full h-full flex items-center justify-center overflow-visible group/map ${isPreview ? 'cursor-default' : 'cursor-crosshair'}`}
     >
+      {/* Map Content Box - clipped for background grid and rounded corners */}
+      <div className="absolute inset-0 bg-[#0a0f1d] rounded-3xl border border-slate-800 shadow-inner overflow-hidden pointer-events-auto">
+        <svg viewBox="0 0 100 100" className="w-full h-full max-w-[850px] max-h-[850px] mx-auto overflow-visible">
+          <defs>
+            <pattern id="dotGrid" width="4" height="4" patternUnits="userSpaceOnUse">
+              <circle cx="0.5" cy="0.5" r="0.5" fill="rgba(255,255,255,0.05)" />
+            </pattern>
+          </defs>
+          <rect x="-10" y="-10" width="120" height="120" fill="url(#dotGrid)" />
+
+          {renderLines()}
+          {renderPath()}
+
+          {STATIONS.map(s => {
+            const coords = getCoords(s.x, s.y);
+            const waypointIdx = waypoints.indexOf(s.id);
+            const isWaypoint = waypointIdx !== -1;
+            const isHovered = s.id === activeHoverId;
+            
+            const visits = pathVisits.get(s.id) || [];
+            const isInPath = visits.length > 0;
+            const inHoveredSegment = hoverSegmentIdx !== null && 
+              (pathResult?.segments[hoverSegmentIdx].from === s.id || pathResult?.segments[hoverSegmentIdx].to === s.id);
+
+            const isInFilteredLeg = filteredLegIndex !== null && visits.some(v => v.legIndex === filteredLegIndex);
+            const isFilteredOut = filteredLegIndex !== null && !isInFilteredLeg && !isWaypoint;
+
+            if (isFilteredOut) return null;
+
+            const labelVisible = isWaypoint || isHovered || (s.isTransfer ? showHubLabels : showLabels) || inHoveredSegment;
+
+            return (
+              <g 
+                key={s.id} 
+                className={isPreview ? "" : "cursor-pointer group/station"}
+                onClick={() => !isPreview && onSelectStation(s.id)}
+                onMouseEnter={() => handleStationMouseEnter(s.id)}
+                onMouseLeave={() => {
+                  setInternalHoverId(null);
+                  setTooltip(null);
+                  setTooltipHoverStation(null);
+                }}
+              >
+                {(isHovered || isWaypoint || inHoveredSegment) && (
+                  <circle cx={coords.x} cy={coords.y} r={inHoveredSegment ? 4.5 : 3.5} fill={isWaypoint ? '#818cf8' : inHoveredSegment ? '#f8fafc' : 'white'} className="animate-pulse opacity-20 transition-all" />
+                )}
+                <circle
+                  cx={coords.x} cy={coords.y} r={isWaypoint ? 2.4 : s.isTransfer ? 2.2 : 1.4}
+                  fill={isWaypoint ? '#818cf8' : inHoveredSegment ? '#f8fafc' : isInPath ? '#334155' : '#1e293b'}
+                  stroke={isWaypoint ? 'white' : inHoveredSegment ? '#818cf8' : isHovered ? '#818cf8' : '#475569'}
+                  strokeWidth={isWaypoint ? 0.7 : (isHovered || inHoveredSegment) ? 0.6 : 0.4}
+                  className="transition-all duration-300"
+                />
+                {isWaypoint && (
+                  <text x={coords.x} y={coords.y + 0.6} textAnchor="middle" className="text-[1.8px] font-black fill-white select-none pointer-events-none">
+                    {getAlphabetLabel(waypointIdx)}
+                  </text>
+                )}
+                {isInPath && !isWaypoint && (
+                  <text x={coords.x} y={coords.y + 0.4} textAnchor="middle" className={`text-[1.3px] font-black select-none pointer-events-none transition-colors duration-300 ${inHoveredSegment || isHovered ? 'fill-indigo-600' : 'fill-slate-100'}`}>
+                    {visits.length > 1 ? '+' : visits[0].stopNumber}
+                  </text>
+                )}
+                <text
+                  x={coords.x} y={coords.y - 3.5} textAnchor="middle"
+                  className={`text-[2.2px] font-bold select-none pointer-events-none transition-all duration-300 ${labelVisible ? 'opacity-100' : 'opacity-0'}`}
+                  fill={isWaypoint ? 'white' : inHoveredSegment ? 'white' : isHovered ? '#818cf8' : '#94a3b8'}
+                >
+                  {s.name}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+
+      {/* Overlays (Title and Controls) - Outside clipped box */}
       <div className="absolute top-8 left-8 z-10 pointer-events-none">
         <h2 className="text-2xl font-black text-white tracking-tighter uppercase leading-none">{title}</h2>
         <p className="text-indigo-400 text-xs font-bold tracking-widest uppercase mt-1 opacity-70">{subtitle}</p>
       </div>
 
-      <svg viewBox="0 0 100 100" className="w-full h-full max-w-[850px] max-h-[850px]">
-        <defs>
-          <pattern id="dotGrid" width="4" height="4" patternUnits="userSpaceOnUse">
-            <circle cx="0.5" cy="0.5" r="0.5" fill="rgba(255,255,255,0.05)" />
-          </pattern>
-        </defs>
-        <rect width="100" height="100" fill="url(#dotGrid)" />
-
-        {renderLines()}
-        {renderPath()}
-
-        {STATIONS.map(s => {
-          const coords = getCoords(s.x, s.y);
-          const waypointIdx = waypoints.indexOf(s.id);
-          const isWaypoint = waypointIdx !== -1;
-          const isHovered = s.id === activeHoverId;
-          
-          const visits = pathVisits.get(s.id) || [];
-          const isInPath = visits.length > 0;
-          const inHoveredSegment = hoverSegmentIdx !== null && 
-            (pathResult?.segments[hoverSegmentIdx].from === s.id || pathResult?.segments[hoverSegmentIdx].to === s.id);
-
-          const isInFilteredLeg = filteredLegIndex !== null && visits.some(v => v.legIndex === filteredLegIndex);
-          const isFilteredOut = filteredLegIndex !== null && !isInFilteredLeg && !isWaypoint;
-
-          if (isFilteredOut) return null;
-
-          const labelVisible = isWaypoint || isHovered || (s.isTransfer ? showHubLabels : showLabels) || inHoveredSegment;
-
-          return (
-            <g 
-              key={s.id} 
-              className={isPreview ? "" : "cursor-pointer group/station"}
-              onClick={() => !isPreview && onSelectStation(s.id)}
-              onMouseEnter={() => handleStationMouseEnter(s.id)}
-              onMouseLeave={() => {
-                setInternalHoverId(null);
-                setTooltip(null);
-                setTooltipHoverStation(null);
-              }}
+      {!isPreview && (
+        <div className="absolute top-8 right-8 z-40 flex flex-col gap-2">
+          <div className="glass-panel p-1.5 rounded-2xl border border-white/10 flex flex-col gap-1">
+            <button 
+              onClick={onToggleLabels}
+              className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${showLabels ? 'bg-indigo-600 text-white shadow-lg' : 'hover:bg-white/5 text-slate-400'}`}
             >
-              {(isHovered || isWaypoint || inHoveredSegment) && (
-                <circle cx={coords.x} cy={coords.y} r={inHoveredSegment ? 4.5 : 3.5} fill={isWaypoint ? '#818cf8' : inHoveredSegment ? '#f8fafc' : 'white'} className="animate-pulse opacity-20 transition-all" />
-              )}
-              <circle
-                cx={coords.x} cy={coords.y} r={isWaypoint ? 2.4 : s.isTransfer ? 2.2 : 1.4}
-                fill={isWaypoint ? '#818cf8' : inHoveredSegment ? '#f8fafc' : isInPath ? '#334155' : '#1e293b'}
-                stroke={isWaypoint ? 'white' : inHoveredSegment ? '#818cf8' : isHovered ? '#818cf8' : '#475569'}
-                strokeWidth={isWaypoint ? 0.7 : (isHovered || inHoveredSegment) ? 0.6 : 0.4}
-                className="transition-all duration-300"
-              />
-              {isWaypoint && (
-                <text x={coords.x} y={coords.y + 0.6} textAnchor="middle" className="text-[1.8px] font-black fill-white select-none pointer-events-none">
-                  {getAlphabetLabel(waypointIdx)}
-                </text>
-              )}
-              {isInPath && !isWaypoint && (
-                <text x={coords.x} y={coords.y + 0.4} textAnchor="middle" className={`text-[1.3px] font-black select-none pointer-events-none transition-colors duration-300 ${inHoveredSegment || isHovered ? 'fill-indigo-600' : 'fill-slate-100'}`}>
-                  {visits.length > 1 ? '+' : visits[0].stopNumber}
-                </text>
-              )}
-              <text
-                x={coords.x} y={coords.y - 3.5} textAnchor="middle"
-                className={`text-[2.2px] font-bold select-none pointer-events-none transition-all duration-300 ${labelVisible ? 'opacity-100' : 'opacity-0'}`}
-                fill={isWaypoint ? 'white' : inHoveredSegment ? 'white' : isHovered ? '#818cf8' : '#94a3b8'}
-              >
-                {s.name}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
+              <div className={`w-3.5 h-3.5 rounded border ${showLabels ? 'bg-white border-white' : 'border-slate-500'}`} />
+              <span className="text-[10px] font-black uppercase tracking-widest">All Nodes</span>
+            </button>
+            <button 
+              onClick={onToggleHubLabels}
+              className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${showHubLabels ? 'bg-indigo-600 text-white shadow-lg' : 'hover:bg-white/5 text-slate-400'}`}
+            >
+              <div className={`w-3.5 h-3.5 rounded border ${showHubLabels ? 'bg-white border-white' : 'border-slate-500'}`} />
+              <span className="text-[10px] font-black uppercase tracking-widest">Hubs Only</span>
+            </button>
+          </div>
+        </div>
+      )}
 
+      {/* Tooltip Layer - Outside clipped box for full visibility across map edges */}
       {tooltip && !isPreview && (
         <div 
-          className="absolute z-50 pointer-events-auto animate-in zoom-in fade-in duration-200"
-          style={{ left: `${tooltip.x}px`, top: `${tooltip.y - 12}px`, transform: 'translate(-50%, -100%)' }}
+          className="absolute z-[100] pointer-events-auto animate-in zoom-in fade-in duration-200"
+          style={{ 
+            left: `${tooltip.x}px`, 
+            top: isTooltipAbove ? `${tooltip.y - 12}px` : `${tooltip.y + 12}px`, 
+            transform: isTooltipAbove ? 'translate(-50%, -100%)' : 'translate(-50%, 0)' 
+          }}
           onMouseEnter={() => setTooltip(tooltip)}
           onMouseLeave={() => setTooltip(null)}
         >
-          <div className="bg-[#1e293b]/95 backdrop-blur-xl border border-slate-700/50 shadow-2xl rounded-2xl p-4 min-w-[280px]">
+          {!isTooltipAbove && (
+            <div className="w-4 h-4 bg-[#1e293b] border-l border-t border-white/10 rotate-45 mx-auto -mb-2 relative z-10"></div>
+          )}
+
+          <div className="bg-[#1e293b]/95 backdrop-blur-xl border border-white/10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] rounded-2xl p-4 min-w-[280px]">
             <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-700/30">
               <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Visit History</span>
               <span className="text-[9px] font-bold text-slate-500">{tooltip.visits.length} Occurrences</span>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-[35vh] overflow-y-auto custom-scrollbar pr-1">
               {tooltip.visits.map((v, i) => (
                 <div key={i} className="flex flex-col gap-1.5 p-2 rounded-lg bg-slate-900/40 border border-white/5">
                   <div className="flex items-center justify-between">
@@ -324,7 +358,10 @@ export const MetroMap: React.FC<MetroMapProps> = ({
               ))}
             </div>
           </div>
-          <div className="w-4 h-4 bg-[#1e293b] border-r border-b border-slate-700/50 rotate-45 mx-auto -mt-2"></div>
+
+          {isTooltipAbove && (
+            <div className="w-4 h-4 bg-[#1e293b] border-r border-b border-white/10 rotate-45 mx-auto -mt-2"></div>
+          )}
         </div>
       )}
     </div>

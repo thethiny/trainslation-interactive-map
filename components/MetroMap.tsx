@@ -99,6 +99,68 @@ export const MetroMap: React.FC<MetroMapProps> = ({
     return map;
   }, [pathResult]);
 
+  // Helper to check if a segment is horizontal, vertical, or 45-degree diagonal
+  const isManhattanOrDiagonal = (c1: {x: number, y: number}, c2: {x: number, y: number}) => {
+    const dx = Math.abs(c1.x - c2.x);
+    const dy = Math.abs(c1.y - c2.y);
+    return dx === 0 || dy === 0 || dx === dy;
+  };
+
+  // Helper to create a Manhattan/diagonal path, favoring outer tracing for L-shapes
+  const getGridPath = (c1: {x: number, y: number}, c2: {x: number, y: number}) => {
+    if (isManhattanOrDiagonal(c1, c2)) {
+      return `M${c1.x},${c1.y} L${c2.x},${c2.y}`;
+    } else {
+      // Map bounding box
+      const minX = 0, minY = 0;
+      const maxX = maxCoords.maxX;
+      const maxY = maxCoords.maxY;
+      // Two possible bends
+      const bend1 = { x: c2.x, y: c1.y }; // horizontal then vertical
+      const bend2 = { x: c1.x, y: c2.y }; // vertical then horizontal
+      // Distance to nearest edge for each bend
+      const edgeDist = (pt: {x: number, y: number}) => {
+        return Math.min(
+          Math.abs(pt.x - minX),
+          Math.abs(pt.x - maxX),
+          Math.abs(pt.y - minY),
+          Math.abs(pt.y - maxY)
+        );
+      };
+      const dist1 = edgeDist(bend1);
+      const dist2 = edgeDist(bend2);
+      // Favor the bend closer to the edge (outer tracing)
+      const bend = dist1 < dist2 ? bend1 : bend2;
+      // Determine which direction the L is (horizontal-then-vertical or vertical-then-horizontal)
+      const isHorzThenVert = (bend === bend1);
+      // Set the length of the diagonal (in SVG units, adjust as needed)
+      const d = 3.5;
+      let path = `M${c1.x},${c1.y} `;
+      if (isHorzThenVert) {
+        // Move horizontally, stop d before the bend
+        const hx = bend.x - Math.sign(bend.x - c1.x) * d;
+        path += `L${hx},${bend.y} `;
+        // Diagonal segment (45-degree)
+        const diagX = bend.x;
+        const diagY = bend.y + Math.sign(c2.y - bend.y) * d;
+        path += `L${diagX},${diagY} `;
+        // Finish vertical to c2
+        path += `L${c2.x},${c2.y}`;
+      } else {
+        // Move vertically, stop d before the bend
+        const hy = bend.y - Math.sign(bend.y - c1.y) * d;
+        path += `L${bend.x},${hy} `;
+        // Diagonal segment (45-degree)
+        const diagX = bend.x + Math.sign(c2.x - bend.x) * d;
+        const diagY = bend.y;
+        path += `L${diagX},${diagY} `;
+        // Finish horizontal to c2
+        path += `L${c2.x},${c2.y}`;
+      }
+      return path;
+    }
+  };
+
   const renderLines = () => {
     const linesByColor: Record<LineID, string[]> = { green: [], blue: [], red: [], yellow: [] };
     const seen = new Set();
@@ -110,7 +172,7 @@ export const MetroMap: React.FC<MetroMapProps> = ({
         const s2 = STATIONS.find(s => s.id === c.to)!;
         const c1 = getCoords(s1.x, s1.y);
         const c2 = getCoords(s2.x, s2.y);
-        linesByColor[c.line].push(`M${c1.x},${c1.y} L${c2.x},${c2.y}`);
+        linesByColor[c.line].push(getGridPath(c1, c2));
         seen.add(key);
       }
     });
@@ -144,7 +206,7 @@ export const MetroMap: React.FC<MetroMapProps> = ({
       const c1 = getCoords(s1.x, s1.y);
       const c2 = getCoords(s2.x, s2.y);
       const color = LINE_COLORS[seg.line];
-      const d = `M${c1.x},${c1.y} L${c2.x},${c2.y}`;
+      const d = getGridPath(c1, c2);
 
       const isHoveredSegment = hoverSegmentIdx === i;
       const isFilteredOut = filteredLegIndex !== null && seg.legIndex !== filteredLegIndex;

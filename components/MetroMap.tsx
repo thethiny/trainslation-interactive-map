@@ -14,10 +14,12 @@ interface MetroMapProps {
   title: string;
   subtitle: string;
   isPreview?: boolean;
+  filteredLegIndex?: number | null;
 }
 
 interface VisitDetail {
   stopNumber: number;
+  legIndex: number;
   legLabel: string | null;
   prevName: string | null;
   prevId: string | null;
@@ -37,7 +39,8 @@ export const MetroMap: React.FC<MetroMapProps> = ({
   showHubLabels,
   title,
   subtitle,
-  isPreview = false
+  isPreview = false,
+  filteredLegIndex = null
 }) => {
   const [internalHoverId, setInternalHoverId] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<{ x: number, y: number, visits: VisitDetail[] } | null>(null);
@@ -73,7 +76,6 @@ export const MetroMap: React.FC<MetroMapProps> = ({
       const prevName = prevId ? STATIONS.find(s => s.id === prevId)?.name || null : 'Start';
       const nextName = nextId ? STATIONS.find(s => s.id === nextId)?.name || null : 'End';
 
-      // Find which leg this visit corresponds to
       const segIdx = idx < pathResult.segments.length ? idx : idx - 1;
       const seg = pathResult.segments[segIdx];
       const legLabel = seg && seg.legIndex !== -1 
@@ -82,6 +84,7 @@ export const MetroMap: React.FC<MetroMapProps> = ({
 
       existing.push({
         stopNumber: idx + 1,
+        legIndex: seg?.legIndex ?? -1,
         legLabel,
         prevName,
         prevId,
@@ -111,6 +114,9 @@ export const MetroMap: React.FC<MetroMapProps> = ({
 
     return Object.entries(linesByColor).map(([lineId, paths]) => {
       const isLineConnectedToHover = activeHoverConnections.some(c => c.line === lineId);
+      // Aggressively fade static lines if filtering a leg
+      const baseOpacity = filteredLegIndex !== null ? "0.01" : (activeHoverId ? (isLineConnectedToHover ? "0.6" : "0.1") : "0.3");
+      
       return (
         <path
           key={lineId}
@@ -120,8 +126,8 @@ export const MetroMap: React.FC<MetroMapProps> = ({
           strokeLinecap="round"
           strokeLinejoin="round"
           fill="none"
-          opacity={activeHoverId ? (isLineConnectedToHover ? "0.6" : "0.1") : "0.3"}
-          className="transition-all duration-300"
+          opacity={baseOpacity}
+          className="transition-all duration-500"
         />
       );
     });
@@ -139,10 +145,13 @@ export const MetroMap: React.FC<MetroMapProps> = ({
       const d = `M${c1.x},${c1.y} L${c2.x},${c2.y}`;
 
       const isHoveredSegment = hoverSegmentIdx === i;
-      const isAdjacentToHovered = hoverSegmentIdx !== null && (Math.abs(hoverSegmentIdx - i) === 1);
+      const isFilteredOut = filteredLegIndex !== null && seg.legIndex !== filteredLegIndex;
+
+      // If filtered out, don't just hide opacity, ensure it feels completely gone from layout
+      if (isFilteredOut) return null;
 
       return (
-        <g key={`path-seg-${i}`}>
+        <g key={`path-seg-${i}`} className="transition-all duration-500">
           <path
             d={d}
             stroke="white"
@@ -150,17 +159,17 @@ export const MetroMap: React.FC<MetroMapProps> = ({
             fill="none"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="opacity-10 transition-all duration-200"
+            className="opacity-10"
           />
           <path
             d={d}
             stroke={color}
-            strokeWidth={isHoveredSegment ? 5 : isAdjacentToHovered ? 4 : 3.5}
+            strokeWidth={isHoveredSegment ? 5 : 3.5}
             fill="none"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className={`path-flow transition-all duration-200 ${isHoveredSegment ? 'opacity-100' : isAdjacentToHovered ? 'opacity-90' : 'opacity-100'}`}
-            style={{ filter: isHoveredSegment ? `drop-shadow(0 0 8px ${color})` : `drop-shadow(0 0 6px ${color})` }}
+            className={`path-flow transition-all duration-300 ${isHoveredSegment ? 'opacity-100' : 'opacity-100'}`}
+            style={{ filter: isHoveredSegment ? `drop-shadow(0 0 10px ${color})` : `drop-shadow(0 0 4px ${color})` }}
           />
         </g>
       );
@@ -178,7 +187,6 @@ export const MetroMap: React.FC<MetroMapProps> = ({
       const rect = containerRef.current.getBoundingClientRect();
       const xPercent = (coords.x / 100) * rect.width;
       const yPercent = (coords.y / 100) * rect.height;
-
       setTooltip({ x: xPercent, y: yPercent, visits });
     }
   };
@@ -209,12 +217,16 @@ export const MetroMap: React.FC<MetroMapProps> = ({
           const waypointIdx = waypoints.indexOf(s.id);
           const isWaypoint = waypointIdx !== -1;
           const isHovered = s.id === activeHoverId;
-          const isNeighbor = activeHoverId ? neighborStationIds.has(s.id) : false;
           
           const visits = pathVisits.get(s.id) || [];
           const isInPath = visits.length > 0;
           const inHoveredSegment = hoverSegmentIdx !== null && 
             (pathResult?.segments[hoverSegmentIdx].from === s.id || pathResult?.segments[hoverSegmentIdx].to === s.id);
+
+          const isInFilteredLeg = filteredLegIndex !== null && visits.some(v => v.legIndex === filteredLegIndex);
+          const isFilteredOut = filteredLegIndex !== null && !isInFilteredLeg && !isWaypoint;
+
+          if (isFilteredOut) return null;
 
           const labelVisible = isWaypoint || isHovered || (s.isTransfer ? showHubLabels : showLabels) || inHoveredSegment;
 
@@ -236,8 +248,8 @@ export const MetroMap: React.FC<MetroMapProps> = ({
               <circle
                 cx={coords.x} cy={coords.y} r={isWaypoint ? 2.4 : s.isTransfer ? 2.2 : 1.4}
                 fill={isWaypoint ? '#818cf8' : inHoveredSegment ? '#f8fafc' : isInPath ? '#334155' : '#1e293b'}
-                stroke={isWaypoint ? 'white' : (isHovered || isNeighbor || inHoveredSegment) ? '#818cf8' : '#475569'}
-                strokeWidth={isWaypoint ? 0.7 : (isHovered || isNeighbor || inHoveredSegment) ? 0.6 : 0.4}
+                stroke={isWaypoint ? 'white' : inHoveredSegment ? '#818cf8' : isHovered ? '#818cf8' : '#475569'}
+                strokeWidth={isWaypoint ? 0.7 : (isHovered || inHoveredSegment) ? 0.6 : 0.4}
                 className="transition-all duration-300"
               />
               {isWaypoint && (
@@ -250,14 +262,10 @@ export const MetroMap: React.FC<MetroMapProps> = ({
                   {visits.length > 1 ? '+' : visits[0].stopNumber}
                 </text>
               )}
-              {s.isTransfer && !isWaypoint && !isInPath && (
-                <circle cx={coords.x} cy={coords.y} r="0.7" fill={(isHovered || isNeighbor || inHoveredSegment) ? '#818cf8' : '#475569'} className="transition-all duration-300" />
-              )}
               <text
                 x={coords.x} y={coords.y - 3.5} textAnchor="middle"
                 className={`text-[2.2px] font-bold select-none pointer-events-none transition-all duration-300 ${labelVisible ? 'opacity-100' : 'opacity-0'}`}
                 fill={isWaypoint ? 'white' : inHoveredSegment ? 'white' : isHovered ? '#818cf8' : '#94a3b8'}
-                style={{ filter: isHovered || inHoveredSegment ? 'drop-shadow(0 0 1px rgba(129, 140, 248, 0.5))' : 'none' }}
               >
                 {s.name}
               </text>

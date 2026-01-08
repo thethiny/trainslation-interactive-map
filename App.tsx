@@ -6,6 +6,7 @@ import { Sidebar } from './components/Sidebar';
 import { ItineraryModal } from './components/ItineraryModal';
 import { OptimizationMode, PathResult } from './types';
 import { findPath } from './services/pathfinder';
+import { STATIONS } from './constants';
 
 const App: React.FC = () => {
   const [waypoints, setWaypoints] = useState<string[]>([]);
@@ -20,7 +21,7 @@ const App: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    if (waypoints.length >= 2) {
+    if (waypoints.length >= 2 && !waypoints.includes("")) {
       const res = findPath(waypoints, mode);
       setPathResult(res);
     } else {
@@ -45,6 +46,16 @@ const App: React.FC = () => {
   const handleWaypointChange = (idx: number, id: string) => {
     const nextWaypoints = [...waypoints];
     nextWaypoints[idx] = id;
+    setWaypoints(nextWaypoints);
+  };
+
+  const handleAddWaypoint = () => {
+    setWaypoints([...waypoints, ""]);
+    setShowPlanOverlay(false);
+  };
+
+  const handleRemoveWaypoint = (idx: number) => {
+    const nextWaypoints = waypoints.filter((_, i) => i !== idx);
     setWaypoints(nextWaypoints);
   };
 
@@ -85,12 +96,19 @@ const App: React.FC = () => {
         </div>
 
         <Sidebar 
-          waypoints={waypoints} onWaypointChange={handleWaypointChange}
-          onHover={setHoverId} onHoverSegment={setHoverSegmentIdx}
-          mode={mode} onModeChange={setMode}
+          waypoints={waypoints} 
+          onWaypointChange={handleWaypointChange}
+          onAddWaypoint={handleAddWaypoint}
+          onRemoveWaypoint={handleRemoveWaypoint}
+          onHover={setHoverId} 
+          onHoverSegment={setHoverSegmentIdx}
+          mode={mode} 
+          onModeChange={setMode}
           pathResult={pathResult}
-          showLabels={showLabels} onToggleLabels={() => setShowLabels(!showLabels)}
-          showHubLabels={showHubLabels} onToggleHubLabels={() => setShowHubLabels(!showHubLabels)}
+          showLabels={showLabels} 
+          onToggleLabels={() => setShowLabels(!showLabels)}
+          showHubLabels={showHubLabels} 
+          onToggleHubLabels={() => setShowHubLabels(!showHubLabels)}
           onOpenModal={() => setIsModalOpen(true)}
         />
       </main>

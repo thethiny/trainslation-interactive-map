@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { MetroMap } from './components/MetroMap';
@@ -6,10 +5,10 @@ import { Sidebar } from './components/Sidebar';
 import { ItineraryModal } from './components/ItineraryModal';
 import { OptimizationMode, PathResult } from './types';
 import { findPath } from './services/pathfinder';
-import { STATIONS } from './constants';
 
 const App: React.FC = () => {
-  const [waypoints, setWaypoints] = useState<string[]>([]);
+  // Start with exactly two slots: A and B.
+  const [waypoints, setWaypoints] = useState<string[]>(['', '']);
   const [hoverId, setHoverId] = useState<string | null>(null);
   const [hoverSegmentIdx, setHoverSegmentIdx] = useState<number | null>(null);
   const [mode, setMode] = useState<OptimizationMode>('HOPS');
@@ -20,9 +19,31 @@ const App: React.FC = () => {
   const [showPlanOverlay, setShowPlanOverlay] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  /**
+   * Invariant:
+   * 1. The list must have at least 2 entries (A and B).
+   * 2. The last entry must always be an empty string (the "+" slot) 
+   *    UNLESS only the first two slots exist and are both empty.
+   */
+  const cleanWaypoints = (ws: string[]) => {
+    // 1. Get all filled values in order
+    const filled = ws.filter(w => w !== "");
+    
+    // 2. We always want a trailing empty slot to act as the "Add" button
+    const next = [...filled, ""];
+    
+    // 3. Ensure we have at least A and B slots
+    while (next.length < 2) {
+      next.push("");
+    }
+    
+    return next;
+  };
+
   useEffect(() => {
-    if (waypoints.length >= 2 && !waypoints.includes("")) {
-      const res = findPath(waypoints, mode);
+    const activeWaypoints = waypoints.filter(w => w !== "");
+    if (activeWaypoints.length >= 2) {
+      const res = findPath(activeWaypoints, mode);
       setPathResult(res);
     } else {
       setPathResult(null);
@@ -31,32 +52,41 @@ const App: React.FC = () => {
 
   const handleStationClick = (id: string) => {
     const existingIdx = waypoints.indexOf(id);
+    let next: string[];
+
     if (existingIdx !== -1) {
-      const nextWaypoints = [...waypoints];
-      nextWaypoints.splice(existingIdx, 1);
-      setWaypoints(nextWaypoints);
+      // Toggle off: Remove if it's there
+      next = waypoints.filter(w => w !== id);
     } else {
-      setWaypoints([...waypoints, id]);
-      if (waypoints.length === 0) {
+      // Find the first empty slot to fill
+      const firstEmpty = waypoints.indexOf("");
+      if (firstEmpty !== -1) {
+        next = [...waypoints];
+        next[firstEmpty] = id;
+      } else {
+        next = [...waypoints, id];
+      }
+      
+      if (waypoints.filter(w => w !== "").length === 0) {
         setShowPlanOverlay(false);
       }
     }
+    setWaypoints(cleanWaypoints(next));
   };
 
   const handleWaypointChange = (idx: number, id: string) => {
     const nextWaypoints = [...waypoints];
     nextWaypoints[idx] = id;
-    setWaypoints(nextWaypoints);
-  };
-
-  const handleAddWaypoint = () => {
-    setWaypoints([...waypoints, ""]);
-    setShowPlanOverlay(false);
+    setWaypoints(cleanWaypoints(nextWaypoints));
+    if (id !== "") setShowPlanOverlay(false);
   };
 
   const handleRemoveWaypoint = (idx: number) => {
+    // Indices 0 and 1 (A and B) cannot be removed from the list structure, 
+    // though their values can be cleared by the StationSelect.
+    // However, the Sidebar logic hides the "X" for index 0 and 1.
     const nextWaypoints = waypoints.filter((_, i) => i !== idx);
-    setWaypoints(nextWaypoints);
+    setWaypoints(cleanWaypoints(nextWaypoints));
   };
 
   return (
@@ -77,7 +107,7 @@ const App: React.FC = () => {
             subtitle="Real-time Network Logic"
           />
           
-          {showPlanOverlay && waypoints.length === 0 && (
+          {showPlanOverlay && waypoints.filter(w => w !== "").length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60 backdrop-blur-[2px] z-20 pointer-events-none">
               <div className="glass-panel p-10 rounded-3xl max-w-sm space-y-6 text-center pointer-events-auto shadow-2xl animate-in zoom-in duration-500">
                 <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto shadow-xl shadow-indigo-600/30">
@@ -87,7 +117,7 @@ const App: React.FC = () => {
                 </div>
                 <div className="space-y-2">
                   <h2 className="text-2xl font-black uppercase tracking-tighter">Plan Your Route</h2>
-                  <p className="text-slate-400 text-sm leading-relaxed font-medium">Select stations sequentially to build your path. The engine optimizes automatically.</p>
+                  <p className="text-slate-400 text-sm leading-relaxed font-medium">Select stations sequentially to build your path. A and B are your minimum journey bounds.</p>
                 </div>
                 <button onClick={() => setShowPlanOverlay(false)} className="w-full py-3 bg-white text-slate-900 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-indigo-50 transition-colors">Start Exploration</button>
               </div>
@@ -98,7 +128,6 @@ const App: React.FC = () => {
         <Sidebar 
           waypoints={waypoints} 
           onWaypointChange={handleWaypointChange}
-          onAddWaypoint={handleAddWaypoint}
           onRemoveWaypoint={handleRemoveWaypoint}
           onHover={setHoverId} 
           onHoverSegment={setHoverSegmentIdx}

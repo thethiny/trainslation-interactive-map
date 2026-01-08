@@ -36,7 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     logic: [
       { 
         id: 'HOPS', 
-        label: 'MIN_STOPS', 
+        label: 'least stops', 
         desc: 'Calculates the fewest number of station nodes for arrival.', 
         icon: (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -47,7 +47,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       },
       { 
         id: 'DISTANCE', 
-        label: 'GEODESIC', 
+        label: 'fastest route', 
         desc: 'Prioritizes shortest physical track length between coordinates.',
         icon: (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -57,7 +57,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       },
       { 
         id: 'LEAST_TRANSITIONS', 
-        label: 'MIN_X-FER', 
+        label: 'least line switches', 
         desc: 'Reduces transit line changes to preserve route continuity.',
         icon: (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -69,7 +69,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     coverage: [
       { 
         id: 'TRAVERSE_ALL', 
-        label: 'NODE_TOUR', 
+        label: 'All Stations', 
         desc: 'Iterates through all stations in the network exactly once.',
         icon: (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -79,7 +79,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       },
       { 
         id: 'TRAVERSE_ALL_EDGES', 
-        label: 'EDGE_SCAN', 
+        label: 'All Tracks', 
         desc: 'Forces the path to traverse every unique track segment.',
         icon: (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,12 +92,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const currentDesc = hoveredStrategy 
     ? [...STRATEGIES.logic, ...STRATEGIES.coverage].find(s => s.id === hoveredStrategy)?.desc 
-    : "Protocol system ready. Select a transit logic to calculate coordinates.";
+    : "Select a transit logic to calculate paths.";
 
   return (
     <div className="w-full lg:w-[440px] h-full flex flex-col industrial-panel p-8 gap-8 overflow-y-auto custom-scrollbar border-4 border-[#30363d]">
       <section className="space-y-6">
-        <label className="text-[12px] font-black uppercase tracking-[0.3em] text-red-600 ml-1">STATION COORDINATES</label>
+        <label className="text-[12px] font-black uppercase tracking-[0.3em] text-red-600 ml-1">Station Points</label>
         <div className="space-y-4">
           {waypoints.map((wid, i) => {
             const isLast = i === waypoints.length - 1;
@@ -116,7 +116,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     value={wid} 
                     onChange={(id) => onWaypointChange(i, id)} 
                     onHover={onHover} 
-                    placeholder={showPlus ? "ADD SECTOR..." : (isA ? "ORIGIN SECTOR (A)" : (isB ? "DESTINATION (B)" : `COORDINATE ${getAlphabetLabel(i)}`))} 
+                    placeholder={showPlus ? "ADD POINT..." : (isA ? "START" : (isB ? "DESTINATION" : `COORDINATE ${getAlphabetLabel(i)}`))} 
                   />
                   {wid && (
                     <button 
@@ -136,7 +136,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       <section className="space-y-6 border-t-2 border-slate-800 pt-8">
         <div>
-          <label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-600 mb-4 block">PATH LOGIC SEQUENCER</label>
+          <label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-600 mb-4 block">Route Mode</label>
           <div className="grid grid-cols-1 gap-2">
             {STRATEGIES.logic.map(opt => (
               <button
@@ -157,7 +157,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
         <div>
-          <label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-600 mb-4 block">SURVEY PROTOCOLS</label>
+          <label className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-600 mb-4 block">Exploration Mode</label>
           <div className="grid grid-cols-1 gap-2">
             {STRATEGIES.coverage.map(opt => (
               <button
@@ -180,7 +180,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         
         {/* Diagnostic Tooltip */}
         <div className="bg-black/50 border border-slate-700 p-4 min-h-[80px]">
-            <div className="text-[9px] font-black text-red-500 mb-2 uppercase tracking-widest">DIAGNOSTIC_FEED:</div>
+            <div className="text-[9px] font-black text-red-500 mb-2 uppercase tracking-widest">Mode Description:</div>
             <p className="text-[10px] font-bold text-slate-400 leading-relaxed uppercase">
                 {currentDesc}
             </p>
@@ -190,7 +190,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {pathResult && (
         <section className="mt-auto space-y-4 pt-8 border-t-2 border-slate-800">
            <div className="flex items-center justify-between">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600">TRANSPORT LOG</h3>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600">ROUTE DIRECTIONS</h3>
             <button 
               onClick={onOpenModal}
               className="text-[10px] font-black uppercase bg-red-600 text-white px-4 py-2 hover:bg-red-700 transition-colors"

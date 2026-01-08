@@ -66,8 +66,8 @@ export const ItineraryModal: React.FC<ItineraryModalProps> = ({
     pathResult.segments.forEach((seg, i) => {
       const isDetour = seg.legIndex === -1;
       const legLabel = isDetour 
-        ? "RECONNAISSANCE" 
-        : `LEG ${getAlphabetLabel(seg.legIndex)} → ${getAlphabetLabel(seg.legIndex + 1)}`;
+        ? "Journey" 
+        : `Trip ${getAlphabetLabel(seg.legIndex)} → ${getAlphabetLabel(seg.legIndex + 1)}`;
       
       if (groups.length === 0 || groups[groups.length - 1].label !== legLabel) {
         groups.push({ 
@@ -87,7 +87,7 @@ export const ItineraryModal: React.FC<ItineraryModalProps> = ({
       
       const startS = STATIONS.find(s => s.id === segments[0].from)!;
       const endS = STATIONS.find(s => s.id === segments[segments.length - 1].to)!;
-      group.title = `${startS.name} > ${endS.name}`;
+      group.title = `${startS.name} → ${endS.name}`;
 
       const internalStations = segments.slice(0, -1).map(s => STATIONS.find(st => st.id === s.to)!);
       group.hubs = internalStations.filter(s => s.isTransfer).map(s => s.name);
@@ -124,7 +124,7 @@ export const ItineraryModal: React.FC<ItineraryModalProps> = ({
             {/* Master Sequence View */}
             <section className="mb-10">
               <div className="flex items-center gap-4 mb-4">
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">NODE_CHAIN</span>
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">ROUTE PATH</span>
                 <div className="flex-1 h-px bg-[#30363d]"></div>
               </div>
               <div className="bg-[#161b22] p-4 border-2 border-[#30363d]">
@@ -186,7 +186,7 @@ export const ItineraryModal: React.FC<ItineraryModalProps> = ({
                               {sTo.name}
                             </span>
                             {isTransfer && (
-                                <span className="text-[7px] font-black text-amber-500 uppercase">TRANSIT_HUB_SWITCH</span>
+                                <span className="text-[7px] font-black text-amber-500 uppercase">Line Switch</span>
                             )}
                           </div>
                         </div>
@@ -205,7 +205,7 @@ export const ItineraryModal: React.FC<ItineraryModalProps> = ({
               {[
                 { label: 'HOPS', value: pathResult?.totalHops },
                 { label: 'TRANSITS', value: pathResult?.totalTransitions },
-                { label: 'GEODESIC', value: `${pathResult?.totalDistance}km` }
+                { label: 'Distance', value: `${pathResult?.totalDistance} Units` }
               ].map((stat, i) => (
                 <div key={i} className="flex flex-col items-center min-w-[60px] border-r last:border-0 border-[#30363d] pr-6 last:pr-0">
                   <span className="text-xl font-black text-white">{stat.value}</span>

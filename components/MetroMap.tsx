@@ -90,8 +90,8 @@ export const MetroMap: React.FC<MetroMapProps> = ({
       const segIdx = idx < pathResult.segments.length ? idx : idx - 1;
       const seg = pathResult.segments[segIdx];
       const legLabel = seg && seg.legIndex !== -1 
-        ? `LEG ${getAlphabetLabel(seg.legIndex)}→${getAlphabetLabel(seg.legIndex + 1)}` 
-        : (seg?.legIndex === -1 ? 'RECONNAISSANCE' : null);
+        ? `Trip ${getAlphabetLabel(seg.legIndex)}→${getAlphabetLabel(seg.legIndex + 1)}` 
+        : (seg?.legIndex === -1 ? 'Journey' : null);
 
       existing.push({ stopNumber: idx + 1, legIndex: seg?.legIndex ?? -1, legLabel, prevName, prevId, nextName, nextId });
       map.set(sid, existing);
@@ -306,7 +306,7 @@ export const MetroMap: React.FC<MetroMapProps> = ({
                 </div>
                 <div className="text-[9px] text-slate-800 flex items-center gap-2">
                   <span className="truncate">{v.prevName}</span>
-                  <span className="text-[#8c2a2a]">▶</span>
+                  <span className="text-[#8c2a2a]">→</span>
                   <span className="truncate">{v.nextName}</span>
                 </div>
               </div>

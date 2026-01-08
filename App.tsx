@@ -74,11 +74,10 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen w-full bg-[#0f172a] text-slate-100 overflow-hidden font-sans selection:bg-indigo-500/30">
+    <div className="flex flex-col h-screen w-full bg-[#05070a] text-slate-100 overflow-hidden font-sans selection:bg-red-500/30">
       <Header />
       
       <main className="flex-1 flex flex-col lg:flex-row p-4 lg:p-6 gap-6 overflow-hidden">
-        {/* Changed overflow-hidden to overflow-visible here to fix tooltip truncation */}
         <div className="flex-1 relative overflow-visible flex flex-col">
           <MetroMap 
             waypoints={waypoints}
@@ -90,23 +89,23 @@ const App: React.FC = () => {
             onToggleLabels={() => setShowLabels(!showLabels)}
             showHubLabels={showHubLabels}
             onToggleHubLabels={() => setShowHubLabels(!showHubLabels)}
-            title="Transit Authority"
-            subtitle="Real-time Network Logic"
+            title="КАРТА НА МЕТРОТО"
+            subtitle="INDUSTRIAL TRANSIT SECTOR 04"
           />
           
           {showPlanOverlay && waypoints.filter(w => w !== "").length === 0 && (
-            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60 backdrop-blur-[2px] z-20 pointer-events-none">
-              <div className="glass-panel p-10 rounded-3xl max-w-sm space-y-6 text-center pointer-events-auto shadow-2xl animate-in zoom-in duration-500">
-                <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto shadow-xl shadow-indigo-600/30">
+            <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-[2px] z-20 pointer-events-none">
+              <div className="industrial-panel p-10 rounded-none max-w-sm space-y-6 text-center pointer-events-auto border-4 border-[#30363d] shadow-2xl animate-in zoom-in duration-500">
+                <div className="w-16 h-16 bg-red-600 rounded-none flex items-center justify-center mx-auto shadow-xl shadow-red-600/30">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                   </svg>
                 </div>
                 <div className="space-y-2">
-                  <h2 className="text-2xl font-black uppercase tracking-tighter">Plan Your Route</h2>
-                  <p className="text-slate-400 text-sm leading-relaxed font-medium">Select stations sequentially to build your path. A and B are your minimum journey bounds.</p>
+                  <h2 className="text-2xl font-black uppercase tracking-tighter text-white">PLAN ROUTE</h2>
+                  <p className="text-slate-400 text-[11px] leading-relaxed font-bold uppercase tracking-wide">Select sectors to initialize transit logic. Bounds A and B are required for sequence generation.</p>
                 </div>
-                <button onClick={() => setShowPlanOverlay(false)} className="w-full py-3 bg-white text-slate-900 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-indigo-50 transition-colors">Start Exploration</button>
+                <button onClick={() => setShowPlanOverlay(false)} className="w-full py-3 bg-red-600 text-white font-black text-xs uppercase tracking-widest rounded-none hover:bg-red-700 transition-colors border border-white/20">ACCESS SYSTEM</button>
               </div>
             </div>
           )}
@@ -133,8 +132,8 @@ const App: React.FC = () => {
         />
       )}
 
-      <div className="absolute -bottom-24 -right-24 pointer-events-none opacity-[0.03] rotate-12 select-none">
-        <div className="text-[300px] font-black leading-none uppercase">Metro</div>
+      <div className="absolute -bottom-24 -right-24 pointer-events-none opacity-[0.02] rotate-12 select-none">
+        <div className="text-[300px] font-black leading-none uppercase text-white">METRO</div>
       </div>
     </div>
   );

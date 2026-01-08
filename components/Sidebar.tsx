@@ -28,7 +28,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   mode,
   onModeChange,
   pathResult,
-  onOpenModal
+  onOpenModal,
+  onClearAllWaypoints
 }) => {
   const [hoveredStrategy, setHoveredStrategy] = useState<string | null>(null);
 
@@ -97,17 +98,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <div className="w-full lg:w-[440px] h-full flex flex-col industrial-panel p-8 gap-8 overflow-y-auto custom-scrollbar border-4 border-[#30363d]">
       <section className="space-y-6">
-        <label className="text-[12px] font-black uppercase tracking-[0.3em] text-red-600 ml-1">Station Points</label>
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-[12px] font-black uppercase tracking-[0.3em] text-red-600 ml-1">Station Points</label>
+          <button
+            onClick={onClearAllWaypoints}
+            className="px-3 py-1 bg-slate-900 border-2 border-slate-800 text-slate-500 hover:text-red-500 hover:border-red-500 font-black text-[10px] uppercase rounded transition-all"
+            title="Clear All Points"
+          >
+            Clear All
+          </button>
+        </div>
         <div className="space-y-4">
           {waypoints.map((wid, i) => {
             const isLast = i === waypoints.length - 1;
             const isA = i === 0;
             const isB = i === 1;
             const showPlus = isLast && !wid && !isA && !isB;
-            
             return (
               <div key={`wp-${i}`} className="flex items-center gap-4">
-                <div className={`w-8 h-8 flex items-center justify-center text-[14px] font-black shrink-0 border-2 ${showPlus ? 'bg-slate-800 border-slate-700 text-slate-500' : 'bg-red-600 border-white/20 text-white shadow-[0_0_10px_rgba(239,68,68,0.4)]'}`}>
+                <div className={`w-8 h-8 flex items-center justify-center text-[14px] font-black shrink-0 border-2 ${showPlus ? 'bg-slate-800 border-slate-700 text-slate-500' : 'bg-red-600 border-white/20 text-white shadow-[0_0_10px_rgba(239,68,68,0.4)]'}`}> 
                   {showPlus ? '+' : getAlphabetLabel(i)}
                 </div>
                 <div className="flex-1 flex items-center gap-2">

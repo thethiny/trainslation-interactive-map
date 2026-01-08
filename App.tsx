@@ -93,20 +93,23 @@ const App: React.FC = () => {
             subtitle="INDUSTRIAL TRANSIT SECTOR 04"
           />
           
+          {/* Toast for first time plan route info */}
           {showPlanOverlay && waypoints.filter(w => w !== "").length === 0 && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-[2px] z-20 pointer-events-none">
-              <div className="industrial-panel p-10 rounded-none max-w-sm space-y-6 text-center pointer-events-auto border-4 border-[#30363d] shadow-2xl animate-in zoom-in duration-500">
-                <div className="w-16 h-16 bg-red-600 rounded-none flex items-center justify-center mx-auto shadow-xl shadow-red-600/30">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div
+              className="fixed left-6 bottom-6 z-30 bg-black/90 border-2 border-[#30363d] shadow-2xl rounded-lg p-5 max-w-xs text-center animate-in fade-in duration-500 cursor-pointer select-none"
+              onClick={() => setShowPlanOverlay(false)}
+              style={{ pointerEvents: 'auto' }}
+            >
+              <div className="flex items-center justify-center mb-3">
+                <div className="w-10 h-10 bg-red-600 rounded flex items-center justify-center shadow-xl shadow-red-600/30">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                   </svg>
                 </div>
-                <div className="space-y-2">
-                  <h2 className="text-2xl font-black uppercase tracking-tighter text-white">PLAN ROUTE</h2>
-                  <p className="text-slate-400 text-[11px] leading-relaxed font-bold uppercase tracking-wide">Select sectors to initialize transit logic. Bounds A and B are required for sequence generation.</p>
-                </div>
-                <button onClick={() => setShowPlanOverlay(false)} className="w-full py-3 bg-red-600 text-white font-black text-xs uppercase tracking-widest rounded-none hover:bg-red-700 transition-colors border border-white/20">ACCESS SYSTEM</button>
               </div>
+              <h2 className="text-lg font-black uppercase tracking-tighter text-white mb-2">PLAN ROUTE</h2>
+              <p className="text-slate-400 text-[11px] leading-relaxed font-bold uppercase tracking-wide">Select your starting station and your target station to find the best routes!</p>
+              <div className="mt-3 text-xs text-slate-500 font-bold">Click to dismiss</div>
             </div>
           )}
         </div>
@@ -121,6 +124,7 @@ const App: React.FC = () => {
           onModeChange={setMode}
           pathResult={pathResult}
           onOpenModal={() => setIsModalOpen(true)}
+          onClearAllWaypoints={() => setWaypoints(['', ''])}
         />
       </main>
 

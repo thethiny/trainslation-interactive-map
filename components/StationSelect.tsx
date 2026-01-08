@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Station } from '../types';
 import { STATIONS, LINE_COLORS } from '../constants';
 
@@ -13,6 +13,7 @@ interface StationSelectProps {
 
 export const StationSelect: React.FC<StationSelectProps> = ({ label, value, onChange, onHover, placeholder }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   const selectedStation = STATIONS.find(s => s.id === value);
 
@@ -25,6 +26,46 @@ export const StationSelect: React.FC<StationSelectProps> = ({ label, value, onCh
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Visual transliteration: Cyrillic to Latin by shape
+  const visualTransliterate = (str: string) => {
+    const map: Record<string, string> = {
+      'А': 'A', 'В': 'B', 'Е': 'E', 'К': 'K', 'М': 'M', 'Н': 'H', 'О': 'O', 'Р': 'P', 'С': 'C', 'Т': 'T', 'У': 'Y', 'Х': 'X',
+      'а': 'a', 'в': 'b', 'е': 'e', 'к': 'k', 'м': 'm', 'н': 'h', 'о': 'o', 'р': 'p', 'с': 'c', 'т': 't', 'у': 'y', 'х': 'x',
+      'Ё': 'E', 'ё': 'e', 'З': '3', 'з': '3', 'Й': 'N', 'й': 'n', 'Л': 'L', 'л': 'l', 'П': 'N', 'п': 'n', 'Ф': 'F', 'ф': 'f', 'Ы': 'bl', 'ы': 'bl', 'Э': 'E', 'э': 'e', 'Ю': 'IO', 'ю': 'io', 'Я': 'R', 'я': 'r',
+    };
+    return str.split('').map(ch => map[ch] || ch).join('');
+  };
+
+  // Edit distance (Levenshtein, max 2 for speed)
+  const editDistance = (a: string, b: string) => {
+    if (Math.abs(a.length - b.length) > 2) return 3;
+    const dp = Array(a.length + 1).fill(null).map(() => Array(b.length + 1).fill(0));
+    for (let i = 0; i <= a.length; i++) dp[i][0] = i;
+    for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+    for (let i = 1; i <= a.length; i++) {
+      for (let j = 1; j <= b.length; j++) {
+        if (a[i - 1] === b[j - 1]) dp[i][j] = dp[i - 1][j - 1];
+        else dp[i][j] = 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+      }
+    }
+    return dp[a.length][b.length];
+  };
+
+  // Fuzzy filter stations
+  const filteredStations = useMemo(() => {
+    if (!search.trim()) return STATIONS;
+    const s = search.trim().toUpperCase();
+    return STATIONS.filter(st => {
+      const name = st.name.toUpperCase();
+      const translit = visualTransliterate(name).toUpperCase();
+      // Partial match
+      if (name.includes(s) || translit.includes(s)) return true;
+      // Edit distance
+      if (editDistance(name, s) <= 2 || editDistance(translit, s) <= 2) return true;
+      return false;
+    });
+  }, [search]);
 
   return (
     <div className="flex flex-col gap-1.5 w-full" ref={containerRef}>
@@ -45,7 +86,20 @@ export const StationSelect: React.FC<StationSelectProps> = ({ label, value, onCh
 
         {isOpen && (
           <div className="absolute z-[100] w-full mt-1 bg-[#161b22] border-2 border-slate-700 shadow-2xl max-h-64 overflow-y-auto custom-scrollbar">
-            {STATIONS.map(s => (
+            <div className="p-2 sticky top-0 bg-[#161b22] z-10">
+              <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search station..."
+                className="w-full px-2 py-2 bg-slate-900 text-white text-xs rounded border border-slate-700 focus:outline-none"
+                autoFocus
+              />
+            </div>
+            {filteredStations.length === 0 && (
+              <div className="px-4 py-3 text-slate-500 text-xs">No stations found.</div>
+            )}
+            {filteredStations.map(s => (
               <div
                 key={s.id}
                 onMouseEnter={() => onHover(s.id)}
@@ -54,6 +108,7 @@ export const StationSelect: React.FC<StationSelectProps> = ({ label, value, onCh
                   onChange(s.id);
                   setIsOpen(false);
                   onHover(null);
+                  setSearch('');
                 }}
                 className={`px-4 py-3 cursor-pointer hover:bg-red-600/20 transition-colors flex flex-col border-b border-white/5 last:border-0 ${value === s.id ? 'bg-red-600/10 text-red-500' : 'text-slate-400'}`}
               >
